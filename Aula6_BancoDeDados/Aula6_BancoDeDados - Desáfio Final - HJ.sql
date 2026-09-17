@@ -4,10 +4,9 @@
 -- EMPRESA: SPORTZONE
 -- ============================================================
 
-DROP DATABASE IF EXISTS sportzone;
 CREATE DATABASE sportzone;
 USE sportzone;
-
+DROP DATABASE IF EXISTS sportzone;
 
 -- ============================================================
 -- TABELA: CLIENTES
@@ -436,12 +435,11 @@ LEFT JOIN (
 ) AS rc ON rc.id_cliente = c.id_cliente
 ORDER BY valor_total_gasto DESC;
 
--- ============================================================================
 -- RELATÓRIO 2 — ANÁLISE DE PRODUTOS
 -- Objetivo: para cada produto do catálogo, mostrar preço, estoque, unidades
 -- vendidas, faturamento gerado e quantidade de clientes diferentes que
 -- compraram. Todos os produtos aparecem, inclusive os nunca vendidos.
--- ============================================================================
+
 SELECT
     p.nome AS produto,
     p.categoria,
@@ -469,12 +467,12 @@ LEFT JOIN (
 ) AS cp ON cp.id_produto = p.id_produto
 ORDER BY faturamento_gerado DESC;
 
--- ============================================================================
+
 -- RELATÓRIO 3 — ANÁLISE DE VENDEDORES
 -- Objetivo: para cada vendedor, mostrar quantidade de vendas, clientes
 -- diferentes atendidos, produtos vendidos, faturamento total e ticket médio.
 -- Todos os vendedores aparecem, inclusive os que ainda não venderam.
--- ============================================================================
+
 SELECT
     vd.nome AS vendedor,
     COALESCE(rv.qtd_vendas, 0) AS qtd_vendas,
@@ -499,13 +497,10 @@ LEFT JOIN (
 ) AS rv ON rv.id_vendedor = vd.id_vendedor
 ORDER BY faturamento_total DESC;
 
--- ============================================================================
 -- PARTE 4 — KPIs GERENCIAIS OBRIGATÓRIOS
--- ============================================================================
 
--- --------------------------------------------------------------------------
 -- KPI 01 — Cliente que mais gastou na SportZone
--- --------------------------------------------------------------------------
+
 SELECT
     c.nome AS cliente,
     SUM(iv.quantidade * iv.preco_unitario) AS valor_total_gasto
@@ -516,10 +511,8 @@ GROUP BY c.id_cliente, c.nome
 ORDER BY valor_total_gasto DESC
 LIMIT 1;
 
-
--- --------------------------------------------------------------------------
 -- KPI 02 — Cliente que realizou a maior quantidade de compras
--- --------------------------------------------------------------------------
+
 SELECT
     c.nome AS cliente,
     COUNT(DISTINCT v.id_venda) AS qtd_compras
@@ -529,10 +522,8 @@ GROUP BY c.id_cliente, c.nome
 ORDER BY qtd_compras DESC
 LIMIT 1;
 
-
--- --------------------------------------------------------------------------
 -- KPI 03 — Produto com maior quantidade de unidades vendidas
--- --------------------------------------------------------------------------
+
 SELECT
     p.nome AS produto,
     SUM(iv.quantidade) AS qtd_vendida
@@ -542,10 +533,8 @@ GROUP BY p.id_produto, p.nome
 ORDER BY qtd_vendida DESC
 LIMIT 1;
 
-
--- --------------------------------------------------------------------------
 -- KPI 04 — Produto que gerou o maior faturamento
--- --------------------------------------------------------------------------
+
 SELECT
     p.nome AS produto,
     SUM(iv.quantidade * iv.preco_unitario) AS faturamento
@@ -555,10 +544,8 @@ GROUP BY p.id_produto, p.nome
 ORDER BY faturamento DESC
 LIMIT 1;
 
-
--- --------------------------------------------------------------------------
 -- KPI 05 — Produtos que nunca foram vendidos (NOT EXISTS)
--- --------------------------------------------------------------------------
+
 SELECT
     p.nome AS produto,
     p.categoria,
@@ -568,10 +555,8 @@ WHERE NOT EXISTS (
     SELECT 1 FROM itens_venda iv WHERE iv.id_produto = p.id_produto
 );
 
-
--- --------------------------------------------------------------------------
 -- KPI 06 — Vendedor que realizou a maior quantidade de vendas
--- --------------------------------------------------------------------------
+
 SELECT
     vd.nome AS vendedor,
     COUNT(DISTINCT v.id_venda) AS qtd_vendas
@@ -581,10 +566,8 @@ GROUP BY vd.id_vendedor, vd.nome
 ORDER BY qtd_vendas DESC
 LIMIT 1;
 
-
--- --------------------------------------------------------------------------
 -- KPI 07 — Vendedor que gerou o maior faturamento
--- --------------------------------------------------------------------------
+
 SELECT
     vd.nome AS vendedor,
     SUM(iv.quantidade * iv.preco_unitario) AS faturamento
@@ -595,10 +578,8 @@ GROUP BY vd.id_vendedor, vd.nome
 ORDER BY faturamento DESC
 LIMIT 1;
 
-
--- --------------------------------------------------------------------------
 -- KPI 08 — Quantidade de clientes que nunca realizaram uma compra
--- --------------------------------------------------------------------------
+
 SELECT
     COUNT(*) AS clientes_sem_compra
 FROM clientes c
@@ -606,18 +587,14 @@ WHERE NOT EXISTS (
     SELECT 1 FROM vendas v WHERE v.id_cliente = c.id_cliente
 );
 
-
--- --------------------------------------------------------------------------
 -- KPI 09 — Faturamento total da empresa
--- --------------------------------------------------------------------------
+
 SELECT
     SUM(iv.quantidade * iv.preco_unitario) AS faturamento_total
 FROM itens_venda iv;
 
-
--- --------------------------------------------------------------------------
 -- KPI 10 — Ticket médio geral das vendas
--- --------------------------------------------------------------------------
+
 SELECT
     ROUND(AVG(valor_venda), 2) AS ticket_medio_geral
 FROM (
@@ -628,14 +605,11 @@ FROM (
     GROUP BY id_venda
 ) AS valor_por_venda;
 
--- ============================================================================
 -- PARTE 5 — KPIs CRIADOS PELA DUPLA
--- ============================================================================
 
--- --------------------------------------------------------------------------
 -- KPI 11 — Concentração de faturamento por categoria de produto
 -- Área: Produtos / Comercial
--- --------------------------------------------------------------------------
+
 SELECT
     p.categoria,
     SUM(iv.quantidade * iv.preco_unitario) AS faturamento,
@@ -649,11 +623,9 @@ INNER JOIN itens_venda iv ON iv.id_produto = p.id_produto
 GROUP BY p.categoria
 ORDER BY faturamento DESC;
 
-
--- --------------------------------------------------------------------------
 -- KPI 12 — Concentração de clientes e faturamento por cidade
 -- Área: Marketing
--- --------------------------------------------------------------------------
+
 SELECT
     gc.cidade,
     COUNT(*) AS qtd_clientes,
@@ -671,10 +643,9 @@ FROM (
 GROUP BY gc.cidade
 ORDER BY faturamento_cidade DESC;
 
--- --------------------------------------------------------------------------
 -- KPI 13 — Perfil de recorrência de compra dos clientes
 -- Área: Marketing / Comercial
--- --------------------------------------------------------------------------
+
 SELECT
     CASE
         WHEN qtd_compras = 0 THEN 'Sem compra'
@@ -693,11 +664,10 @@ FROM (
 GROUP BY perfil_cliente
 ORDER BY qtd_clientes DESC;
 
--- --------------------------------------------------------------------------
 -- KPI 14 — Produtos com estoque elevado e baixo volume de vendas
 -- (risco de capital parado / candidatos a promoção)
 -- Área: Estoque / Logística
--- --------------------------------------------------------------------------
+
 SELECT
     p.nome AS produto,
     p.categoria,
@@ -715,10 +685,9 @@ WHERE p.estoque >= 20
   AND COALESCE(vp.qtd_vendida, 0) <= 5
 ORDER BY p.estoque DESC;
 
--- --------------------------------------------------------------------------
 -- KPI 15 — Evolução mensal do faturamento
 -- Área: Diretoria / Financeiro
--- --------------------------------------------------------------------------
+
 SELECT
     DATE_FORMAT(v.data_venda, '%Y-%m') AS mes,
     COUNT(DISTINCT v.id_venda)         AS qtd_vendas,
@@ -728,18 +697,14 @@ INNER JOIN itens_venda iv ON iv.id_venda = v.id_venda
 GROUP BY mes
 ORDER BY mes;
 
-
--- ============================================================================
 -- ANEXO TÉCNICO — DEMONSTRAÇÃO DE RECURSOS SQL COMPLEMENTARES
 -- (RIGHT JOIN, FULL OUTER JOIN simulado, CROSS JOIN, IN, LIKE, EXISTS,
 --  HAVING, MIN/MAX e UNION), conforme exigido nos requisitos técnicos.
--- ============================================================================
 
--- --------------------------------------------------------------------------
 -- A1 — RIGHT JOIN
 -- Mesma informação do Relatório 3 (vendas por vendedor), obtida a partir
 -- do lado "vendedores" via RIGHT JOIN, para demonstrar o uso do recurso.
--- --------------------------------------------------------------------------
+
 SELECT
     vd.nome AS vendedor,
     COUNT(DISTINCT v.id_venda) AS qtd_vendas
@@ -748,13 +713,11 @@ RIGHT JOIN vendedores vd ON vd.id_vendedor = v.id_vendedor
 GROUP BY vd.id_vendedor, vd.nome
 ORDER BY qtd_vendas DESC;
 
-
--- --------------------------------------------------------------------------
 -- A2 — FULL OUTER JOIN simulado no MySQL (LEFT JOIN + RIGHT JOIN + UNION)
 -- Objetivo: comparar as cidades onde a SportZone tem clientes com as
 -- cidades onde ela tem vendedores, identificando cidades com clientes
 -- mas sem vendedor local (e vice-versa).
--- --------------------------------------------------------------------------
+
 SELECT
     c.cidade                                                     AS cidade,
     'Possui clientes'                                            AS situacao,
@@ -775,13 +738,11 @@ GROUP BY vd.cidade, vendedor_na_cidade
 
 ORDER BY cidade;
 
-
--- --------------------------------------------------------------------------
 -- A3 — CROSS JOIN + NOT EXISTS
 -- Objetivo: cruzar todas as cidades de clientes com todas as categorias
 -- de produto para encontrar combinações cidade x categoria que ainda
 -- nunca geraram venda (oportunidades de expansão de mercado).
--- --------------------------------------------------------------------------
+
 SELECT
     co.cidade,
     co.categoria
@@ -814,12 +775,11 @@ WHERE NOT EXISTS (
 )
 ORDER BY co.cidade, co.categoria;
 
--- --------------------------------------------------------------------------
 -- A4 — IN, LIKE e EXISTS
 -- Objetivo: localizar produtos das categorias de Musculação/Fitness cujo
 -- nome contenha "Kit", ou que já tenham pelo menos uma venda registrada
 -- (auditoria de catálogo para campanhas).
--- --------------------------------------------------------------------------
+
 SELECT
     p.nome AS produto,
     p.categoria,
@@ -833,12 +793,12 @@ WHERE (p.categoria IN ('Musculação', 'Fitness') AND p.nome LIKE '%Kit%')
 ORDER BY p.categoria, p.nome;
 
 
--- --------------------------------------------------------------------------
+
 -- A5 — HAVING + MIN/MAX
 -- Objetivo: identificar clientes de alto valor (gasto acima de R$ 3.000,00)
 -- e mostrar a data da primeira e da última compra de cada um (janela de
 -- relacionamento com a marca).
--- --------------------------------------------------------------------------
+
 SELECT
     c.nome AS cliente,
     COUNT(DISTINCT v.id_venda)              AS qtd_compras,
@@ -853,11 +813,11 @@ HAVING SUM(iv.quantidade * iv.preco_unitario) > 3000
 ORDER BY valor_total DESC;
 
 
--- --------------------------------------------------------------------------
+
 -- A6 — UNION
 -- Objetivo: montar um mini "dashboard" com o Top 3 clientes e o Top 3
 -- vendedores por faturamento em um único resultado.
--- --------------------------------------------------------------------------
+
 SELECT * FROM (
     SELECT 'Cliente' AS tipo, c.nome AS nome, SUM(iv.quantidade * iv.preco_unitario) AS valor
     FROM clientes c
